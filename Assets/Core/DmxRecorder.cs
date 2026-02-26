@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using Melanchall.DryWetMidi.Multimedia;
 using Unity_DMX;
@@ -18,12 +17,16 @@ namespace Core
         
         private InputDevice inputDevice;
 
-        public bool record = false;
-        public bool save = false;
         public ulong ticks = 0;
+
+        private static DmxRecorder _instance;
+        public static DmxRecorder Instance { get { return _instance; } }
+        
+        public bool IsRecording => stopwatch.IsRunning;
         
         private void Start()
         {
+            _instance = this;
             inputDevice = InputDevice.GetByName("MA2 MidiLoop");
             
             inputDevice.MidiTimeCodeReceived += InputDeviceOnMidiTimeCodeReceived;
@@ -79,25 +82,51 @@ namespace Core
             currentRecording.keyframes.Add(stopwatch.ElapsedMilliseconds, data);
         }
 
-        private void Update()
+        public void StartRecording()
         {
-            if (record && !stopwatch.IsRunning)
-            {
-                stopwatch.Restart();
-                Debug.Log($"Started recording. Total frames: {currentRecording.keyframes.Count}");
-            }
+            Debug.Log($"Started recording. Total frames: {currentRecording.keyframes.Count}");
+            
+            currentRecording.keyframes.Clear();
+            stopwatch.Reset();
+            stopwatch.Start();
+        }
 
-            if (!record && stopwatch.IsRunning)
-            {
-                stopwatch.Stop();
-                Debug.Log($"Stopped recording. Total frames: {currentRecording.keyframes.Count}");
-            }
+        public void StopRecording()
+        {
+            Debug.Log($"Stopped recording. Total frames: {currentRecording.keyframes.Count}");
+            stopwatch.Stop();
+        }
 
-            if (save)
-            {
-                save = false;
-                currentRecording.Save("show.bin");
-            }
+        public void SaveRecording()
+        {
+            Debug.Log($"Save recording.");
+            currentRecording.Save();
+        }
+
+        public void LoadRecording()
+        {
+            Debug.Log($"Load recording.");
+            currentRecording = DmxDataContainer.Load();
+        }
+        
+        
+
+        public void StartPlayback()
+        {
+            Debug.Log($"Started playback.");
+            
+        }
+
+        public void StopPlayback()
+        {
+            Debug.Log($"Stopped playback.");
+            
+        }
+
+        public void PausePlayback()
+        {
+            Debug.Log($"Pause playback.");
+            
         }
     }
 }

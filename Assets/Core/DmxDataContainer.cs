@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
+using SFB;
 using UnityEngine;
 using File = UnityEngine.Windows.File;
 
@@ -14,13 +15,12 @@ namespace Core
         [SerializeField]
         public Dictionary<long, DmxUniverseContainer> keyframes = new Dictionary<long, DmxUniverseContainer>();
 
-        public void Save(string pathToFile)
+        public void Save()
         {
-            if (File.Exists(pathToFile))
+            var path = StandaloneFileBrowser.SaveFilePanel("Save recording", Application.dataPath, "recording", "bin");
+            if (File.Exists(path))
             {
-                // todo: add a random string to name
-                Debug.LogError("File already exists: " + pathToFile);
-                return;
+                File.Delete(path);
             }
             
             var stream = new MemoryStream();
@@ -31,12 +31,17 @@ namespace Core
             
             Debug.Log($"Saved dmx data with {keyframes.Count} keyframes.");
             
-            File.WriteAllBytes(pathToFile, stream.ToArray());
+            File.WriteAllBytes(path, stream.ToArray());
         }
 
-        public static DmxDataContainer Load(string pathToFile)
+        public static DmxDataContainer Load()
         {
-            var bytes = File.ReadAllBytes(pathToFile);
+            var path = StandaloneFileBrowser.OpenFilePanel("Load recording", Application.dataPath, "bin", false)[0];
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException($"File not found: {path}");
+            }
+            var bytes = File.ReadAllBytes(path);
             var ms = new MemoryStream(bytes);
             var reader = new BsonReader(ms);
             var serializer = new JsonSerializer();
